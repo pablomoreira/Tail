@@ -6,49 +6,51 @@ import (
 	"os"
 	"time"
 )
-type person struct {
-    filename string
-	line string
-    chang bool
+
+type Tail struct {
+	filename  string
+	line      string
+	change    bool
 	FileObjet os.File
+	time      time.Duration
+}
+
+func (tail *Tail) Check() {
+	var Info os.FileInfo
+	var err error
+	for _loop := true; _loop == true; {
+		Info, err = os.Stat(tail.filename)
+
+		if err != nil {
+			log.Panic(err)
+		}
+		log.Printf("%d\n", Info.Size())
+		time.Sleep(tail.time)
+
+	}
 }
 
 func main() {
-	//line := make(chan string)
+	FileWatch := Tail{filename: "file.log", time: time.Second * 1}
+
 	ctx, cancel := context.WithCancel(context.Background())
-	//defer cancel()
-	
-	go tail("file.log", cancel, time.Millisecond*100)
+	defer cancel()
+
+	//go tail("file.log", cancel, time.Millisecond*100)
+	go FileWatch.Check()
 
 	//log.Print(<-line)
 	for _loop := true; _loop == true; {
 		select {
 		case <-ctx.Done():
 			log.Print("Done")
-			_loop = false
+			//_loop = false
 		default:
-			
+			log.Print(FileWatch.change)
 		}
-		time.Sleep(time.Millisecond * 1)
+		time.Sleep(time.Millisecond * 1000)
 	}
+
 }
 
-func tail(filename string, cancel context.CancelFunc, t_sleep time.Duration) {
-	//File, err := os.OpenFile(filename, os.O_RDONLY, 644)
-	var Info os.FileInfo
-	var err error
-	time.Sleep(t_sleep)
-	for _loop := true; _loop == true; {
-		Info, err = os.Stat(filename)
-
-		if err != nil {
-			log.Panic(err)
-		}
-		log.Printf("%d\n", Info.Size())
-		time.Sleep(time.Second * 1)
-		_loop = false
-		cancel()
-	}
-}
-
-func check
+//func check
