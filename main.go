@@ -5,6 +5,8 @@ import (
 	"log"
 	"os"
 	"time"
+
+	"github.com/u2takey/go-utils/strings"
 )
 
 type Tail struct {
@@ -24,16 +26,33 @@ func (tail *Tail) ReadLine() {
 	if err != nil {
 		log.Panic(err)
 	}
-	tail.FileObjet.Seek(-1, 2)
-	var b []byte
-	r, e := tail.FileObjet.Read(b)
-	log.Print(b, e, r)
+	size2read := int64(tail.posi) - int64(tail.size)
+	ret, _ := tail.FileObjet.Seek(size2read, 2)
+
+	//log.Print(pos, err2)
+
+	var b = make([]byte, -1*size2read)
+	read, e := tail.FileObjet.Read(b)
+	s := strings.BytesToString(b)
+	tail.posi = tail.size
+
+	log.Printf("bytes: %v\nerr %v\n ret: %v\n string: %v\n", read, e, ret, s)
+	tail.FileObjet.Close()
 }
 
 func (tail *Tail) Check() {
 	var Info os.FileInfo
 	var err error
 	tail.change = make(chan bool)
+	//Atencion *****
+	Info, err = os.Stat(tail.filename)
+	if err != nil {
+		log.Panic(err)
+	}
+
+	tail.size = uint64(Info.Size())
+	tail.posi = tail.size
+
 	for _loop := true; _loop == true; {
 		Info, err = os.Stat(tail.filename)
 		if err != nil {
