@@ -15,8 +15,8 @@ type Tail struct {
 	change    chan bool
 	FileObjet *os.File
 	time      time.Duration
-	size      uint64
-	posi      uint64
+	size      int64
+	posi      int64
 }
 
 // Read last line
@@ -26,17 +26,22 @@ func (tail *Tail) ReadLine() {
 	if err != nil {
 		log.Panic(err)
 	}
+
 	size2read := int64(tail.posi) - int64(tail.size)
-	ret, _ := tail.FileObjet.Seek(size2read, 2)
 
-	//log.Print(pos, err2)
+	if size2read < 0 {
+		tail.posi, _ = tail.FileObjet.Seek(size2read, 2)
 
-	var b = make([]byte, -1*size2read)
-	read, e := tail.FileObjet.Read(b)
-	s := strings.BytesToString(b)
-	tail.posi = tail.size
+		//log.Print(pos, err2)
 
-	log.Printf("bytes: %v\nerr %v\n ret: %v\n string: %v\n", read, e, ret, s)
+		var b = make([]byte, -1*size2read)
+		tail.FileObjet.Read(b)
+		tail.posi, _ = tail.FileObjet.Seek(0, 2)
+
+		tail.line = strings.BytesToString(b)
+		//log.Printf("bytes: %v\nerr %v\nret: %v\nstring: %v\n", read, e, tail.posi, s)
+	}
+
 	tail.FileObjet.Close()
 }
 
@@ -50,7 +55,7 @@ func (tail *Tail) Check() {
 		log.Panic(err)
 	}
 
-	tail.size = uint64(Info.Size())
+	tail.size = int64(Info.Size())
 	tail.posi = tail.size
 
 	for _loop := true; _loop == true; {
@@ -59,15 +64,18 @@ func (tail *Tail) Check() {
 			log.Panic(err)
 		}
 		//log.Printf("%d\n", Info.Size())
-		_size := uint64(Info.Size())
-		if tail.size != _size {
+		_size := int64(Info.Size())
+		if tail.size < _size {
 			tail.size = _size
-
 			tail.change <- true
-			tail.ReadLine()
-
 		} else {
+			if tail.size > _size {
+				tail.size = _size
+				tail.posi = _size
+				//tail.change <- true
+			}
 		}
+
 		time.Sleep(tail.time)
 	}
 }
@@ -88,7 +96,8 @@ func main() {
 		case <-ctx.Done():
 			log.Print("Done")
 		case <-FileWatch.change:
-			log.Printf("change %v size %v", FileWatch.change, FileWatch.size)
+			FileWatch.ReadLine()
+			log.Printf("%s", FileWatch.line)
 			//FileWatch.change = false
 		default:
 
