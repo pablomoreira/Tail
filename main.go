@@ -27,7 +27,7 @@ func (tail *Tail) ReadLine() {
 		log.Panic(err)
 	}
 
-	size2read := int64(tail.posi) - int64(tail.size)
+	size2read := int64(tail.posi+1) - int64(tail.size)
 
 	if size2read < 0 {
 		tail.posi, _ = tail.FileObjet.Seek(size2read, 2)
@@ -52,11 +52,12 @@ func (tail *Tail) Check() {
 	//Atencion *****
 	Info, err = os.Stat(tail.filename)
 	if err != nil {
-		log.Panic(err)
+		log.Fatal(err)
 	}
 
 	tail.size = int64(Info.Size())
-	tail.posi = tail.size
+	tail.posi = tail.size - 1
+	log.Println("size-> ", tail.size, "posi-> ", tail.posi)
 
 	for _loop := true; _loop == true; {
 		Info, err = os.Stat(tail.filename)
