@@ -36,7 +36,8 @@ func (tail *Tail) ReadLine() {
 
 		var b = make([]byte, -1*size2read)
 		tail.FileObjet.Read(b)
-		tail.posi, _ = tail.FileObjet.Seek(0, 2)
+		//tail.posi, _ = tail.FileObjet.Seek(0, 2)
+		tail.posi = tail.size - 1
 
 		tail.line = strings.BytesToString(b)
 		//log.Printf("bytes: %v\nerr %v\nret: %v\nstring: %v\n", read, e, tail.posi, s)
@@ -48,32 +49,26 @@ func (tail *Tail) ReadLine() {
 func (tail *Tail) Check() {
 	var Info os.FileInfo
 	var err error
-	tail.change = make(chan bool)
-	//Atencion *****
-	Info, err = os.Stat(tail.filename)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	tail.size = int64(Info.Size())
-	tail.posi = tail.size - 1
-	log.Println("size-> ", tail.size, "posi-> ", tail.posi)
 
 	for _loop := true; _loop == true; {
 		Info, err = os.Stat(tail.filename)
 		if err != nil {
-			log.Panic(err)
-		}
-		//log.Printf("%d\n", Info.Size())
-		_size := int64(Info.Size())
-		if tail.size < _size {
-			tail.size = _size
-			tail.change <- true
+			//log.Fatal(err)
+			log.Print("No such file..")
+			tail.size = 0
+			tail.posi = -1
 		} else {
-			if tail.size > _size {
+			//log.Printf("%d\n", Info.Size())
+			_size := int64(Info.Size())
+			if tail.size < _size {
 				tail.size = _size
-				tail.posi = _size
-				//tail.change <- true
+				tail.change <- true
+			} else {
+				if tail.size > _size {
+					tail.size = _size
+					tail.posi = tail.size - 1
+					//tail.change <- true
+				}
 			}
 		}
 
@@ -83,6 +78,7 @@ func (tail *Tail) Check() {
 
 func main() {
 	FileWatch := Tail{filename: "file.log", time: time.Second * 1, size: 0}
+	FileWatch.change = make(chan bool)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
