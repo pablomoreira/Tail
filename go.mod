@@ -1,4 +1,4 @@
-module github.com/pablomoreira/Tail
+module github.com/pablomoreira/tail
 
 go 1.19
 
