@@ -39,7 +39,6 @@ func (tail *Tail) ReadLine() {
 		tail.posi = tail.Size - 1
 
 		tail.Line = strings.BytesToString(b)
-		//log.Printf("bytes: %v\nerr %v\nret: %v\nstring: %v\n", read, e, tail.posi, s)
 	}
 
 	tail.FileObjet.Close()
