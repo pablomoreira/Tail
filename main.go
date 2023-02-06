@@ -10,7 +10,7 @@ import (
 
 type Tail struct {
 	Filename  string
-	Line      string
+	Buffer    string
 	Change    chan bool
 	FileObjet *os.File
 	Time      time.Duration
@@ -19,7 +19,7 @@ type Tail struct {
 }
 
 // Read last line
-func (tail *Tail) ReadLine() {
+func (tail *Tail) Read() {
 	var err error
 	tail.FileObjet, err = os.OpenFile(tail.Filename, os.O_RDONLY, 600)
 	if err != nil {
@@ -38,7 +38,7 @@ func (tail *Tail) ReadLine() {
 		//tail.posi, _ = tail.FileObjet.Seek(0, 2)
 		tail.posi = tail.Size - 1
 
-		tail.Line = strings.BytesToString(b)
+		tail.Buffer = strings.BytesToString(b)
 	}
 
 	tail.FileObjet.Close()
